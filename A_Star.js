@@ -28,21 +28,14 @@ function grid(size) {
     }
   }
   
-  grid[3][0].block = true;
-  grid[3][1].block = true;
-  grid[3][2].block = true;
-  grid[3][5].block = true;
-  grid[3][3].block = true;
-  grid[3][4].block = true;
-  grid[3][6].block = true;
-  grid[3][7].block = true;
-  grid[5][9].block = true;
-  grid[5][8].block = true;
-  grid[5][7].block = true;
-  grid[5][6].block = true;
-  grid[5][5].block = true;
-  grid[5][4].block = true;
-  grid[5][3].block = true;
+  // For testing purposes - insert blocks randomly into the grid
+  for (var i = 0; i < size; i++) {
+    for (var j = 0; j < size; j++) {
+      if(Math.random() < 0.2) {
+        grid[i][j].block = true;
+      }
+    }
+  }
   
   return grid;
 }
@@ -66,10 +59,11 @@ function A_Star() {
   var end_x = 6;
   var end_y = 8;
   
+  // size of grid nxn
   var size = 10;
   
   // initialize grid of size 10
-  var grid10 = grid(size);
+  var grid_aStar = grid(size);
   
   // set of nodes that have already been looked at
   var closedSet = [];
@@ -78,19 +72,17 @@ function A_Star() {
   var openSet = [];
   
   // add the starting element to the open set
-  openSet.push(grid10[start_y][start_x]);
-  grid10[start_y][start_x].gScore = 0;
-  grid10[start_y][start_x].fScore = grid10[start_y][start_x].heuristicCalc(end_x, end_y); // just the heuristic
+  openSet.push(grid_aStar[start_y][start_x]);
+  grid_aStar[start_y][start_x].gScore = 0;
+  grid_aStar[start_y][start_x].fScore = grid_aStar[start_y][start_x].heuristicCalc(end_x, end_y); // just the heuristic
 
   // while open set is not empty
   while (openSet.length > 0) {
     openSet.sort(fScoreSort);
     var currentNode = openSet[0];
     
-    //console.log(currentNode.x + " " + currentNode.y);
-    
     if ((currentNode.x == end_x) && (currentNode.y == end_y)) {
-      return reconstruct_path(grid10, currentNode, start_x, start_y); // return path
+      return reconstruct_path(grid_aStar, currentNode, start_x, start_y); // return path
     }
     
     // remove current node from open set
@@ -99,6 +91,7 @@ function A_Star() {
     
     closedSet.push(currentNode);
     
+    // looking at all of the node's neighbours
     for (var i = -1; i < 2; i++) {
       for (var j = -1; j < 2; j++) {
         
@@ -107,13 +100,12 @@ function A_Star() {
           continue;
         }
 
-        // check to see if "-" (block) is within the grid
-        if ((grid10[currentNode.y + i][currentNode.x + j].block)) {
+        // check to see if block is within the grid
+        if ((grid_aStar[currentNode.y + i][currentNode.x + j].block)) {
           continue;
         }
 
-        var neighbour = grid10[currentNode.y + i][currentNode.x + j];
-        
+        var neighbour = grid_aStar[currentNode.y + i][currentNode.x + j];
         
         // skip the current node
         if (currentNode.y + i == currentNode.y && currentNode.x + j == currentNode.x) {
@@ -136,7 +128,8 @@ function A_Star() {
           openSet.push(neighbour);
         }
         
-        // it has a better route so skip it
+        // it has a better route so skip it - which won't happen
+        // since the weight to each node is 1
         //if (tScore > neighbour.gScore) {
         //  continue;
         //}
@@ -148,43 +141,43 @@ function A_Star() {
         
       }
     }
-    
   }
   
-  // the node was not found
+  // the node was not found or could not be reached
+  console.log("Node was either not found or could not be reached!");
   return false;
   
 }
 
-function reconstruct_path(grid10, current, start_x, start_y) {
+function reconstruct_path(grid_aStar, current, start_x, start_y) {
     var currentNode = current;
     var totalPath = [current];
     
     // used to print array
     var map = new Array(10);
     for (var i = 0; i < 10; i++) {
-      map[i] = new Array(10).fill(0);
+      map[i] = new Array(10).fill('  ');
     }
     
     // insert 'blocks' into grid
     for (var i = 0; i < map.length; i++) {
       for (var j = 0; j < map.length; j++) {
-        if(grid10[i][j].block) {
-          map[i][j] = 9;
+        if(grid_aStar[i][j].block) {
+          map[i][j] = '[]';
         }
       }
     }
     
     // go through the parents to find how the route
     while (currentNode.parent != null) {
-      map[currentNode.y][currentNode.x] = 1;
+      map[currentNode.y][currentNode.x] = '//';
       totalPath.push(currentNode.parent);
       currentNode = currentNode.parent;
     }
     
     // include the initial node as well
-    var initialNode = grid10[start_y][start_x];
-    map[initialNode.y][initialNode.x] = 1;
+    var initialNode = grid_aStar[start_y][start_x];
+    map[initialNode.y][initialNode.x] = '//';
     totalPath.push(initialNode);
     
     // print it
